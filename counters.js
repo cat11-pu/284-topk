@@ -1,8 +1,15 @@
-// counters.js：计数增减与衰减（基线：一律原样返回）
+// counters.js：计数增减与衰减（不改动入参，一律返回新表）
 export function bump(counts, name) {
-  return counts;
+  const next = Object.assign({}, counts);
+  next[name] = (Object.prototype.hasOwnProperty.call(next, name) ? next[name] : 0) + 1;
+  return next;
 }
 
 export function decay(counts) {
-  return counts;
+  const next = {};
+  for (const name of Object.keys(counts)) {
+    const remaining = counts[name] - 1;
+    if (remaining > 0) next[name] = remaining;
+  }
+  return next;
 }

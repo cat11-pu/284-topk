@@ -50,22 +50,44 @@ emit("与全量对照差异 =", fingerprint(closed.state) === fingerprint(fullCl
 
 
 // ---- 异常路径探针：真调用实现，看它报出什么码（不是从样例里抄）----
+let emptyNameCode = "没有报错";
 try {
   step(Object.assign({}, { budget: 3, k: 2,
     state: { counts: {}, ledger: [], applied: [] },
     events: [{ id: 1, kind: "hit", name: "" }] }));
-  emit("空名字报码", "没有报错");
 } catch (error) {
-  emit("空名字报码", error && error.code ? error.code : String(error.message));
+  emptyNameCode = error && error.code ? error.code : String(error.message);
 }
+emit("空名字报码", emptyNameCode);
+let badEventCode = "没有报错";
 try {
   step(Object.assign({}, { budget: 3, k: 2,
     state: { counts: {}, ledger: [], applied: [] },
     events: [{ id: 1, kind: "peek", name: "a" }] }));
-  emit("事件不合法报码", "没有报错");
 } catch (error) {
-  emit("事件不合法报码", error && error.code ? error.code : String(error.message));
+  badEventCode = error && error.code ? error.code : String(error.message);
 }
+emit("事件不合法报码", badEventCode);
+
+
+// ---- 七条机检断言：真算真比，任何一条不过都按失败计数 ----
+const machineChecks = [
+  ["两档处理条数不同", first.observed !== wide.observed],
+  ["收尾前账大于零而收尾后归零", first.ledger_before > 0 && closed.state.ledger.length === 0],
+  ["拆两轮中间态不同而收尾态一致",
+    fingerprint(r2.state) !== fingerprint(first.state)
+      && fingerprint(closedTwo.state) === fingerprint(closed.state)],
+  ["重放不再处理", replay.observed === 0],
+  ["工作计数不超事件条数", first.judged <= first.judged_bound && first.judged_bound === events.length],
+  ["与全量对照为零", (fingerprint(closed.state) === fingerprint(fullClosed.state) ? 0 : 1) === 0],
+  ["异常探针真调", emptyNameCode === "E_BAD_NAME" && badEventCode === "E_BAD_EVENT"]
+];
+let machineBad = 0;
+for (const [label, passed] of machineChecks) {
+  if (passed) { console.log("机检通过 " + label); }
+  else { machineBad += 1; console.log("机检失败 " + label); }
+}
+console.log("机检断言 " + (machineChecks.length - machineBad) + "/" + machineChecks.length + " 通过");
 
 
 // ---- 期望值（参考模型算出，与题面给的验收数值一致）----
@@ -142,4 +164,4 @@ for (const [label, want] of Object.entries(EXPECTED)) {
   else { __bad += 1; console.log("不一致 " + label + " 期望 " + JSON.stringify(want) + " 实际 " + JSON.stringify(got)); }
 }
 console.log("验收项 " + (Object.keys(EXPECTED).length - __bad) + "/" + Object.keys(EXPECTED).length + " 通过");
-process.exit(__bad === 0 ? 0 : 1);
+process.exit(__bad === 0 && machineBad === 0 ? 0 : 1);
