@@ -1,0 +1,17 @@
+{
+  "budget": 3,
+  "k": 2,
+  "name_error_code": "E_BAD_NAME",
+  "event_error_code": "E_BAD_EVENT",
+  "state": { "counts": {}, "ledger": [], "applied": [] },
+  "events": [
+    { "id": 1, "kind": "hit", "name": "a" },
+    { "id": 2, "kind": "hit", "name": "b" },
+    { "id": 3, "kind": "hit", "name": "b" },
+    { "id": 4, "kind": "hit", "name": "b" },
+    { "id": 5, "kind": "hit", "name": "a" },
+    { "id": 6, "kind": "hit", "name": "c" },
+    { "id": 7, "kind": "decay" },
+    { "id": 8, "kind": "hit", "name": "a" }
+  ]
+}
